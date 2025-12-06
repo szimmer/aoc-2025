@@ -53,3 +53,28 @@ sum(dat1$maxjolt)
 ```
 
     [1] 17359
+
+# Part 2
+
+``` r
+find_max_many <- function(vec, n){
+  maxlocs <- rep(NA, n)
+  maxprior <- 0
+  lv <- length(vec)
+  for (i in seq(1, n)){
+    subvec <- vec[seq(maxprior+1, lv-(n-i))]
+    maxlocs[i] <- maxprior <- which.max(subvec) + maxprior
+  }
+  sum(10^(seq(n-1, 0))*vec[maxlocs])
+}
+
+dat2 <- 
+  dat |>
+  mutate(
+    maxjolt = map_dbl(inpvec, ~find_max_many(.x, 12))
+  )
+
+sum(dat2$maxjolt) |> print(digits=20)
+```
+
+    [1] 172787336861064
