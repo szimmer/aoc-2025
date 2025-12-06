@@ -1,0 +1,90 @@
+# Day AOC 2025
+
+
+``` r
+library(readr)
+library(dplyr)
+```
+
+
+    Attaching package: 'dplyr'
+
+    The following objects are masked from 'package:stats':
+
+        filter, lag
+
+    The following objects are masked from 'package:base':
+
+        intersect, setdiff, setequal, union
+
+``` r
+dat_in <- read_csv(here::here("Inputs", glue::glue("{if_else(params$test, 'test-', '')}input-day{params$day}.txt")), col_names="inp", col_types=cols(inp=col_character()))
+
+dat <- dat_in |>
+  mutate(
+    direction=stringr::str_sub(inp, 1, 1),
+    mag=parse_number(inp)
+  )
+```
+
+# Part 1
+
+``` r
+moveit <- function(cur, dir, mag){
+  if (dir=="L"){
+    x <- cur - mag
+  } else{
+    x <- cur + mag
+  }
+  x %% 100
+}
+
+moveitall <- function(dat){
+  curloc <- 50
+  locs <- rep(NA, nrow(dat))
+  dirs <- dat$direction
+  mags <- dat$mag
+  for (i in seq_along(dirs)){
+    curloc <- moveit(curloc, dirs[i], mags[i])
+    locs[i] <- curloc
+  }
+  return(locs)
+}
+
+alllocs <- moveitall(dat)
+sum(alllocs==0)
+```
+
+    [1] 999
+
+# Part 2
+
+``` r
+countzero <- function(cur, dir, mag){
+  if (dir=="L"){
+    x <- cur - mag
+  } else{
+    x <- cur + mag
+  }
+  
+  steps <- seq(cur, x)
+  sum((steps[-1] %% 100)==0)
+}
+
+allzerocounts <- function(dat){
+  curloc <- 50
+  zeros <- rep(NA, nrow(dat))
+  dirs <- dat$direction
+  mags <- dat$mag
+  
+  for (i in seq_along(dirs)){
+    zeros[i] <- countzero(curloc, dirs[i], mags[i])
+    curloc <- moveit(curloc, dirs[i], mags[i])
+  }
+  return(zeros)
+}
+
+sum(allzerocounts(dat))
+```
+
+    [1] 6099
