@@ -1,0 +1,50 @@
+---
+format: gfm
+params:
+  test: false
+  day: 3
+title: "AOC 2025 Day `r params$day`"
+---
+
+```{r}
+#| label: load-pack
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(purrr)
+```
+
+```{r}
+#| label: read-parse
+
+dat_in <- read_csv(here::here("Inputs", glue::glue("{if_else(params$test, 'test-', '')}input-day{params$day}.txt")), col_names="inp", col_types=cols(inp=col_character()))
+
+dat <- dat_in |>
+  mutate(
+    ID=row_number(),
+    inpvec=str_split(inp, "") |> map(as.integer)
+  )
+```
+
+# Part 1
+
+```{r}
+#| label: part1
+
+find_max_pair <- function(vec){
+  n <- length(vec)
+  maxstart <- which.max(vec[-n])
+  maxsecond <- which.max(vec[seq(maxstart+1, n)]) + maxstart
+  vec[maxstart]*10 + vec[maxsecond]
+}
+
+dat1 <- 
+  dat |>
+  mutate(
+    maxjolt = map_dbl(inpvec, find_max_pair)
+  )
+
+sum(dat1$maxjolt)
+```
+
