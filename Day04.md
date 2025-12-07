@@ -1,0 +1,56 @@
+# AOC 2025 Day 4
+
+
+``` r
+library(readr)
+library(dplyr)
+```
+
+
+    Attaching package: 'dplyr'
+
+    The following objects are masked from 'package:stats':
+
+        filter, lag
+
+    The following objects are masked from 'package:base':
+
+        intersect, setdiff, setequal, union
+
+``` r
+library(tidyr)
+library(stringr)
+library(purrr)
+```
+
+``` r
+dat_in <- read_lines(here::here("Inputs", glue::glue("{if_else(params$test, 'test-', '')}input-day{params$day}.txt")))
+
+dat <- str_split(dat_in, "", simplify = TRUE) 
+```
+
+# Part 1
+
+``` r
+check_access <- function(i, j){
+  if (dat[i, j]!="@"){
+    return(NA)
+  } else{
+    ir <- seq(max(i-1, 1), min(i+1, nrow(dat)))
+    jr <- seq(max(j-1, 1), min(j+1, ncol(dat)))
+    (sum(dat[ir, jr]=="@")-1) < 4
+  }
+}
+
+datout <- matrix(NA, nrow=nrow(dat), ncol=ncol(dat))
+
+for (idxr in 1:nrow(dat)){
+  for (idxc in 1:ncol(dat)){
+    datout[idxr, idxc] <- check_access(idxr, idxc)
+  }
+}
+
+sum(datout, na.rm=TRUE)
+```
+
+    [1] 1486
