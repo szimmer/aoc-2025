@@ -34,7 +34,7 @@ dat <- str_split(dat_in, "", simplify = TRUE)
 ``` r
 check_access <- function(i, j){
   if (dat[i, j]!="@"){
-    return(NA)
+    FALSE
   } else{
     ir <- seq(max(i-1, 1), min(i+1, nrow(dat)))
     jr <- seq(max(j-1, 1), min(j+1, ncol(dat)))
@@ -54,3 +54,49 @@ sum(datout, na.rm=TRUE)
 ```
 
     [1] 1486
+
+# Part 2
+
+``` r
+remove_paper <- function(layout){
+  removed <- 0
+  check_access_inner <- function(i, j){
+    if (layout[i, j]!="@"){
+      FALSE
+    } else{
+      ir <- seq(max(i-1, 1), min(i+1, nrow(layout)))
+      jr <- seq(max(j-1, 1), min(j+1, ncol(layout)))
+      (sum(layout[ir, jr]=="@")-1) < 4
+    }
+  }
+  for (idxr in 1:nrow(layout)){
+    for (idxc in 1:ncol(layout)){
+      if (check_access_inner(idxr, idxc)){
+        layout[idxr, idxc] <- "x"
+        removed <- removed + 1
+      }
+    }
+  }
+  return(list(newlayout=layout, removed=removed))
+}
+
+layoutcur <- dat
+keepgoing <- TRUE
+steps <- 0
+nremoved <- 0
+while (keepgoing){
+  tryit <- remove_paper(layoutcur)
+  if (tryit$removed > 0){
+    layoutcur <- tryit$newlayout
+    nremoved <- nremoved + tryit$removed
+    steps <- steps + 1
+  } else{
+    keepgoing <- FALSE
+  }
+  
+}
+
+sum(layoutcur=="x")
+```
+
+    [1] 9024
