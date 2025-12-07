@@ -1,0 +1,39 @@
+---
+format: gfm
+params:
+  test: false
+  day: 5
+title: "AOC 2025 Day `r params$day`"
+---
+
+```{r}
+#| label: load-pack
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(purrr)
+```
+
+```{r}
+#| label: read-parse
+
+dat_in <- read_lines(here::here("Inputs", glue::glue("{if_else(params$test, 'test-', '')}input-day{params$day}.txt")))
+
+ing_ids <- dat_in |> str_subset("\\d+-\\d+") |> str_split("-") |> map(as.numeric) 
+avail_ings <- dat_in |> str_subset("^\\d+$") |> as.numeric()
+
+```
+
+# Part 1
+
+```{r}
+#| label: part1
+
+check_ingredient <- function(x){
+  any(map_lgl(ing_ids, ~between(x, .x[1], .x[2])))
+}
+fresh <- avail_ings |> map_lgl(check_ingredient)
+sum(fresh)
+```
+
