@@ -30,7 +30,7 @@ avail_ings <- dat_in |> str_subset("^\\d+$") |> as.numeric()
 ```{r}
 #| label: part1
 check_ingredient <- function(x){
-any(map_lgl(ing_ids, ~between(x, .x[1], .x[2])))
+  any(map_lgl(ing_ids, ~between(x, .x[1], .x[2])))
 }
 fresh <- avail_ings |> map_lgl(check_ingredient)
 sum(fresh)
@@ -50,21 +50,22 @@ ends <- ends[reord]
 ranges <- NULL
 currange <- c(starts[1], ends[1])
 for (i in seq(2, length(starts))){
-
-  if (any(between(currange, starts[i], ends[i]))){
+  
+  if (any(between(currange, starts[i], ends[i]))|
+      any(between(c(starts[i], ends[i]), currange[1], currange[2]))){
     # overlapping ranges
     currange[2] <- max(currange[2], ends[i])
-    if (i==length(starts)){
-      ranges <- rbind(ranges, currange )
-    }
   } else{
     # non-overlapping ranges
-    ranges <- rbind(ranges, currange )
+    ranges <- rbind(ranges, unname(currange))
     currange <- c(starts[i], ends[i])
   }
 }
+if (i==length(starts)){
+  ranges <- rbind(ranges, unname(currange))
+}
 
 sum(ranges[,2]-ranges[,1]+1) |> print(digits=20)
-
+ranges |> print(digits=20)
 ```
 
