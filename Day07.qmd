@@ -40,3 +40,11 @@ for (i in 2:nrow(dat_mat)){
 nsplits
 ```
 
+# Part 2
+
+```{r}
+#| label: part-2
+
+
+```
+
