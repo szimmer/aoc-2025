@@ -44,72 +44,113 @@ max(areas)
 # Part 2
 
 ```{r}
-#| label: part-2
-layout <- matrix(NA, nrow=max(dat_mat[,1]), ncol=max(dat_mat[,2]))
+#| label: part-2-edge-border
 
 # Identify red and green borders
+# Red is 1, Green is 2
+
+list_of_tiles <- list()
+dat_mat <- unname(dat_mat)
 
 priorcoord <- dat_mat[nrow(dat_mat), ]
 for (i in seq_len(nrow(dat_mat))){
   curcoord <- dat_mat[i,]
-  layout[curcoord[1], curcoord[2]] <- "R" # corner
-
+  
+  list_of_tiles[[length(list_of_tiles) + 1]] <- c(curcoord, 1) # red
+  
   # edge between corners as green
   if (priorcoord[1]==curcoord[1]){
     fillgreen_w_corner <- seq(priorcoord[2], curcoord[2])
     fillgreen <- fillgreen_w_corner[-c(1, length(fillgreen_w_corner))]
-    layout[priorcoord[1], fillgreen] <- "G"
+    greentiles <- matrix(NA, ncol=3, nrow=length(fillgreen))
+    greentiles[,1] <- priorcoord[1]
+    greentiles[,2] <- fillgreen
+    greentiles[,3] <- 2
   } else{
     fillgreen_w_corner <- seq(priorcoord[1], curcoord[1])
     fillgreen <- fillgreen_w_corner[-c(1, length(fillgreen_w_corner))]
-    layout[fillgreen, priorcoord[2]] <- "G"
+    greentiles <- matrix(NA, ncol=3, nrow=length(fillgreen))
+    greentiles[,2] <- priorcoord[2]
+    greentiles[,1] <- fillgreen
+    greentiles[,3] <- 2
   }
-
+  
+  list_of_tiles[[length(list_of_tiles) + 1]] <- greentiles
+  
   priorcoord <- curcoord
 }
 
+tiles_locations <-  do.call(rbind, list_of_tiles)
+
 if (params$test){
+  layout <- matrix(NA, nrow=max(dat_mat[,1]), ncol=max(dat_mat[,2]))
+  for (i in seq_len(nrow(tiles_locations))){
+    if (tiles_locations[i, 3]==1){
+      layout[tiles_locations[i,1], tiles_locations[i, 2]] <- "R"
+    } else{
+      layout[tiles_locations[i,1], tiles_locations[i, 2]] <- "G"
+    }
+    
+  }
   print(layout)
 }
 
+```
+
+
+```{r}
+#| label: part-2-fill
 # Fill in the green
+list_of_tiles <- list()
 
-unfilled <- which(is.na(layout), arr.ind=TRUE)
-
-check_inside <- function(i){
-  coord <- unfilled[i,]
-  if (coord[1] %in% c(1, nrow(layout)) |
-      coord[2] %in% c(1, ncol(layout))){
-    return(FALSE)
-  }
-  column <- layout[, coord[2]]
-  row <- layout[coord[1], ]
-  above <- column[seq(1, coord[1]-1)]
-  below <- column[seq(coord[1]+1, length(column))]
-  left <- row[seq(1, coord[2]-1)]
-  right <- row[seq(coord[2]+1, length(row))]
-  list(above, below, left, right) |>
-    map_lgl(~any(!is.na(.x))) |>
-    all()
-}
-
-for (i in seq_len(nrow(unfilled))){
-  if (check_inside(i)){
-    layout[unfilled[i, 1], unfilled[i, 2]] <- "G"
+for (rowi in sort(unique(tiles_locations[, 1]))){
+  # tiles in that row
+  colsi <- tiles_locations[tiles_locations[,1]==rowi, 2]
+  fillgreen_w_corner <- seq(min(colsi), max(colsi))
+  fillgreen <- setdiff(fillgreen_w_corner, colsi)
+  if (length(fillgreen)>0){
+    greentiles <- matrix(NA, ncol=3, nrow=length(fillgreen))
+    greentiles[,1] <- rowi
+    greentiles[,2] <- fillgreen
+    greentiles[,3] <- 2
+    list_of_tiles[[length(list_of_tiles) + 1]] <- greentiles
   }
 }
+
+tiles_locations_filler <-  do.call(rbind, list_of_tiles)
 
 if (params$test){
+    for (i in seq_len(nrow(tiles_locations_filler))){
+    if (tiles_locations_filler[i, 3]==1){
+      layout[tiles_locations_filler[i,1], tiles_locations_filler[i, 2]] <- "R"
+    } else{
+      layout[tiles_locations_filler[i,1], tiles_locations_filler[i, 2]] <- "G"
+    }
+    
+  }
   print(layout)
 }
+
+tiles_locations_all <- rbind(tiles_locations, tiles_locations_filler) 
+colnames(tiles_locations_all) <- c("x", "y", "color")
+tiles_df <- tiles_locations_all |> as_tibble()
+
+```
+
+
+```{r}
+#| label: part-2-area
+# Calculate areas
 
 calc_area_colored <- function(i){
+  tot_area <- calc_area(i)
   coords <- dat_mat[combos[,i],]
-  rect <- layout[seq(coords[1,1], coords[2,1]), seq(coords[1, 2], coords[2, 2])]
-  if (any(is.na(rect))){
-    return(NA)
+  tiles_rect <- tiles_df |>
+    filter(x %in% seq(coords[1,1], coords[2,1]), y %in% seq(coords[1, 2], coords[2, 2]))
+  if (nrow(tiles_rect)==tot_area){
+    return(tot_area)
   } else{
-    prod(dim(rect))
+    return(NA)
   }
 }
 
