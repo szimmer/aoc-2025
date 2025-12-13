@@ -1,0 +1,122 @@
+---
+format: gfm
+params:
+  test: true
+  day: 9
+title: "AOC 2025 Day `r params$day`"
+---
+
+```{r}
+#| label: load-pack
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(purrr)
+```
+
+```{r}
+#| label: read-parse
+
+dat_in <- read_csv(here::here("Inputs", glue::glue("{if_else(params$test, 'test-', '')}input-day{params$day}.txt")), col_names = c("X", "Y"), col_types="ii")
+
+dat_mat <- dat_in |>
+  as.matrix()
+
+```
+
+# Part 1
+
+```{r}
+#| label: part-1
+
+combos <- combn(nrow(dat_in), 2)
+calc_area <- function(i){
+  coords <- dat_mat[combos[,i],]
+  abs(prod(coords[1,]-coords[2,]+1))
+}
+
+areas <- map_dbl(1:ncol(combos), calc_area)
+
+max(areas)
+```
+
+# Part 2
+
+```{r}
+#| label: part-2
+layout <- matrix(NA, nrow=max(dat_mat[,1]), ncol=max(dat_mat[,2]))
+
+# Identify red and green borders
+
+priorcoord <- dat_mat[nrow(dat_mat), ]
+for (i in seq_len(nrow(dat_mat))){
+  curcoord <- dat_mat[i,]
+  layout[curcoord[1], curcoord[2]] <- "R" # corner
+
+  # edge between corners as green
+  if (priorcoord[1]==curcoord[1]){
+    fillgreen_w_corner <- seq(priorcoord[2], curcoord[2])
+    fillgreen <- fillgreen_w_corner[-c(1, length(fillgreen_w_corner))]
+    layout[priorcoord[1], fillgreen] <- "G"
+  } else{
+    fillgreen_w_corner <- seq(priorcoord[1], curcoord[1])
+    fillgreen <- fillgreen_w_corner[-c(1, length(fillgreen_w_corner))]
+    layout[fillgreen, priorcoord[2]] <- "G"
+  }
+
+  priorcoord <- curcoord
+}
+
+if (params$test){
+  print(layout)
+}
+
+# Fill in the green
+
+unfilled <- which(is.na(layout), arr.ind=TRUE)
+
+check_inside <- function(i){
+  coord <- unfilled[i,]
+  if (coord[1] %in% c(1, nrow(layout)) |
+      coord[2] %in% c(1, ncol(layout))){
+    return(FALSE)
+  }
+  column <- layout[, coord[2]]
+  row <- layout[coord[1], ]
+  above <- column[seq(1, coord[1]-1)]
+  below <- column[seq(coord[1]+1, length(column))]
+  left <- row[seq(1, coord[2]-1)]
+  right <- row[seq(coord[2]+1, length(row))]
+  list(above, below, left, right) |>
+    map_lgl(~any(!is.na(.x))) |>
+    all()
+}
+
+for (i in seq_len(nrow(unfilled))){
+  if (check_inside(i)){
+    layout[unfilled[i, 1], unfilled[i, 2]] <- "G"
+  }
+}
+
+if (params$test){
+  print(layout)
+}
+
+calc_area_colored <- function(i){
+  coords <- dat_mat[combos[,i],]
+  rect <- layout[seq(coords[1,1], coords[2,1]), seq(coords[1, 2], coords[2, 2])]
+  if (any(is.na(rect))){
+    return(NA)
+  } else{
+    prod(dim(rect))
+  }
+}
+
+areas_colored <- map_dbl(1:ncol(combos), calc_area_colored)
+
+max(areas_colored, na.rm=TRUE)
+
+
+```
+
