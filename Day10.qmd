@@ -1,0 +1,78 @@
+---
+format: gfm
+params:
+  test: false
+  day: 10
+title: "AOC 2025 Day `r params$day`"
+---
+
+```{r}
+#| label: load-pack
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(purrr)
+```
+
+```{r}
+#| label: read-parse
+
+dat_in <- read_lines(here::here("Inputs", glue::glue("{if_else(params$test, 'test-', '')}input-day{params$day}.txt")))
+
+dat_indicator <- str_extract(dat_in, "\\[(.+)\\]", group=1) |> str_replace_all("\\.", "0") |> str_replace_all("#", "1") |> map(~as.numeric(str_split_1(.x, ""))) |> map(~if_else(.x==0, -1, .x))
+
+make_buttons <- function(x){
+  map(x, ~(as.numeric(str_split_1(.x, ","))+1))
+}
+
+dat_buttons <- str_extract_all(dat_in, "\\(.+\\)") |> str_remove_all("\\(") |> str_remove_all(" ") |> str_remove("\\)$") |> str_split("\\)") |> map(make_buttons)
+```
+
+# Part 1
+
+```{r}
+#| label: part-1
+
+check_buttons_machines <- function(machinei){
+  indicatori <- dat_indicator[[machinei]]
+  initstatei <- rep(-1, length(indicatori))
+  act_buttons <- function(button){
+    x <- rep(1, length(initstatei))
+    x[button] <- -1
+    return(x)
+  }
+  buttonsi <- dat_buttons[[machinei]] |> map(act_buttons) |> do.call(rbind, args=_)
+  
+  success <- FALSE
+  nbuttons <- 0
+  while(!success){
+    nbuttons <- nbuttons +1
+    button_options <- combn(nrow(buttonsi), nbuttons)
+    test_combo <- function(j){
+      res <- rbind(initstatei, buttonsi[button_options[, j],]) |>
+        apply(2, prod)
+      all(res==indicatori)
+    }
+    for (checkj in seq_len(ncol(button_options))){
+      tryit <- test_combo(checkj)
+      if (tryit){
+        success <- TRUE
+        break
+      }
+    }
+    # cat("nbuttons: ", nbuttons, "\n")
+    # cat("Succeed: ", success, "\n")
+    
+  }
+  return(nbuttons)
+}
+
+
+button_presses <- seq_along(dat_indicator) |>
+  map_dbl(check_buttons_machines)
+
+sum(button_presses)
+
+```
+
