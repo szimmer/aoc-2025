@@ -1,0 +1,66 @@
+---
+format: gfm
+params:
+  test: false
+  day: 2
+title: "AOC 2025 Day `r params$day`"
+---
+
+```{r}
+#| label: load-pack
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(purrr)
+```
+
+
+```{r}
+#| label: read-parse
+
+dat_in <- read_csv(here::here("Inputs", glue::glue("{if_else(params$test, 'test-', '')}input-day{params$day}.txt")), col_names = FALSE)
+
+dat <- dat_in |>
+  pivot_longer(cols=everything()) |>
+  select(-name) |>
+  separate_wider_delim(value, names=c("X1", "X2"), delim="-") |>
+  mutate(
+    across(starts_with("X"), as.numeric),
+    rng=map2(X1, X2, seq)) |>
+  unnest(rng) |>
+  mutate(
+    rng_char=as.character(rng),
+  ) |>
+  select(Value=rng_char, Val_num=rng)
+  
+
+```
+
+# Part 1
+
+```{r}
+#| label: part-1
+dat |>
+  mutate(
+    RepeatVal=str_detect(Value, "^(\\d+)\\1$")
+  ) |>
+  filter(RepeatVal) |>
+  pull(Val_num) |>
+  sum()    
+  
+```
+
+# Part 2
+
+```{r}
+#| label: part-2
+dat |>
+  mutate(
+    RepeatVal=str_detect(Value, "^(\\d+)(\\1)+$")
+  ) |>
+  filter(RepeatVal) |>
+  pull(Val_num) |>
+  sum()    
+  
+```
